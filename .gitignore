@@ -1,0 +1,22 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Downloaded model files
+pose_landmarker_lite.task
+
+# resources
+*.MOV
+*.mp4
+*.avi
+*.mkv
+*.mov
+*.mp4
+

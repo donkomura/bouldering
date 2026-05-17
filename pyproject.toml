@@ -1,0 +1,19 @@
+[project]
+name = "bouldering"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.11"
+dependencies = [
+    "mediapipe>=0.10.35",
+    "opencv-python>=4.13.0.92",
+    "opencv-stubs>=0.0.9",
+]
+
+[dependency-groups]
+dev = [
+    "basedpyright>=1.39.4",
+]
+
+[tool.basedpyright]
+typeCheckingMode = "standard"
+reportMissingTypeStubs = false

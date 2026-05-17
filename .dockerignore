@@ -1,0 +1,12 @@
+*.MOV
+*.mp4
+*.avi
+*.mkv
+*.mov
+*.mp4
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.git/
+.gitignore

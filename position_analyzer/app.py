@@ -15,7 +15,7 @@ from mediapipe.tasks import python as mp_python
 from mediapipe.tasks.python import vision as mp_vision
 from mediapipe.tasks.python.components.containers.landmark import NormalizedLandmark
 
-from perf_timer import PerfTimer
+from position_analyzer.perf_timer import PerfTimer
 
 VISIBILITY_THRESHOLD = 0.5
 COM_COLOR = (255, 0, 0)
@@ -195,7 +195,7 @@ class Renderer:
         self.out.release()
 
 
-def app(options: AppOptions) -> None:
+def app(options: AppOptions, progress_callback=None) -> None:
     timer = PerfTimer()
 
     timer.checkin("setup")
@@ -246,6 +246,9 @@ def app(options: AppOptions) -> None:
             logger.info(
                 f"Progress: {frame_index} / {analyzer.total_frames} frames processed ({current_fps:.2f} FPS)"
             )
+
+            if progress_callback:
+                progress_callback(frame_index, analyzer.total_frames)
 
     timer.checkout("loop")
 

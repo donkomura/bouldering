@@ -14,8 +14,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: Root project
-            working-directory: .
+          - name: Position analyzer project
+            working-directory: position_analyzer
           - name: Climb log project
             working-directory: climb_log
 

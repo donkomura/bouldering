@@ -3,19 +3,19 @@ from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
 
-from climb_log.models import ClimbResult, FallCause, Record, WallAngle
+from climb_log.models import ClimbResult, FallCause, Record
 from climb_log.store import Store
 
 
 def make_record(id: str = "test-id", recorded_at: datetime | None = None) -> Record:
     return Record(
         id=id,
-        video_path="test.MOV",
+        filename="test.MOV",
         result=ClimbResult.FALL,
         recorded_at=recorded_at or datetime(2026, 5, 30, 14, 0, 0),
         fall_causes=[FallCause.FOOT_SLIP],
-        grade="3級",
-        wall_angle=WallAngle.OVERHANG,
+        grade="V3",
+        wall_angle=30,
     )
 
 

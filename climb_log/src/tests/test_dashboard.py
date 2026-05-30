@@ -1,13 +1,13 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime
-from pathlib import Path
 from uuid import uuid4
 
 from climb_log.dashboard import (
     compute_stats,
     focus_points,
-    render_image,
+    render_json,
     render_terminal,
 )
 from climb_log.models import ClimbResult, FallCause, Record
@@ -16,7 +16,7 @@ from climb_log.models import ClimbResult, FallCause, Record
 def make_fall(cause: FallCause | None = None, id: str | None = None) -> Record:
     return Record(
         id=id or str(uuid4()),
-        video_path="v.MOV",
+        filename="v.MOV",
         result=ClimbResult.FALL,
         recorded_at=datetime(2026, 5, 30),
         fall_causes=[cause] if cause else [],
@@ -26,7 +26,7 @@ def make_fall(cause: FallCause | None = None, id: str | None = None) -> Record:
 def make_top(id: str | None = None) -> Record:
     return Record(
         id=id or str(uuid4()),
-        video_path="v.MOV",
+        filename="v.MOV",
         result=ClimbResult.TOP,
         recorded_at=datetime(2026, 5, 30),
     )
@@ -62,10 +62,6 @@ class TestComputeStats:
         stats = compute_stats([make_fall(FallCause.FOOT_SLIP)])
         assert FallCause.PUMP not in stats.fall_cause_counts
 
-    def test_period_label_is_set(self):
-        stats = compute_stats([], period_label="2026年5月")
-        assert stats.period_label == "2026年5月"
-
 
 class TestFocusPoints:
     def test_returns_most_frequent_cause(self):
@@ -73,7 +69,7 @@ class TestFocusPoints:
         stats = compute_stats(records)
         points = focus_points(stats)
         assert len(points) >= 1
-        assert any("足切れ" in p for p in points)
+        assert any("Foot slip" in p for p in points)
 
     def test_returns_empty_for_no_falls(self):
         stats = compute_stats([make_top()])
@@ -97,18 +93,28 @@ class TestRenderTerminal:
         assert text is not None
 
 
-class TestRenderImage:
-    def test_saves_png_file(self, tmp_path: Path):
-        stats = compute_stats(
-            [make_fall(FallCause.FOOT_SLIP), make_fall(FallCause.PUMP), make_top()]
-        )
-        output = tmp_path / "dashboard.png"
-        render_image(stats, output)
-        assert output.exists()
-        assert output.stat().st_size > 0
+class TestRenderJson:
+    def test_returns_valid_json(self):
+        stats = compute_stats([make_fall(), make_top()])
+        data = json.loads(render_json(stats))
+        assert data["total_tries"] == 2
+        assert data["top_count"] == 1
+        assert data["fall_count"] == 1
 
-    def test_saves_file_for_empty_stats(self, tmp_path: Path):
-        stats = compute_stats([])
-        output = tmp_path / "empty.png"
-        render_image(stats, output)
-        assert output.exists()
+    def test_includes_fall_rate(self):
+        stats = compute_stats([make_fall(), make_top()])
+        data = json.loads(render_json(stats))
+        assert data["fall_rate"] == 50.0
+
+    def test_fall_causes_keyed_by_value(self):
+        stats = compute_stats(
+            [make_fall(FallCause.FOOT_SLIP), make_fall(FallCause.FOOT_SLIP)]
+        )
+        data = json.loads(render_json(stats))
+        assert data["fall_causes"]["foot_slip"] == 2
+
+    def test_handles_empty_stats(self):
+        data = json.loads(render_json(compute_stats([])))
+        assert data["total_tries"] == 0
+        assert data["fall_rate"] == 0.0
+        assert data["fall_causes"] == {}

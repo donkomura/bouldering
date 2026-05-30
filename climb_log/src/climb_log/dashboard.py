@@ -1,22 +1,16 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
-from pathlib import Path
-
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-from matplotlib.axes import Axes
 
 from climb_log.models import ClimbResult, FallCause, Record
 
 _CAUSE_LABELS: dict[FallCause, str] = {
-    FallCause.FOOT_SLIP: "足切れ",
-    FallCause.PUMP: "パンプ",
-    FallCause.SWEATY_HANDS: "手汗",
-    FallCause.WRONG_MOVE: "ムーブミス",
-    FallCause.OTHER: "その他",
+    FallCause.FOOT_SLIP: "Foot slip",
+    FallCause.PUMP: "Pump",
+    FallCause.SWEATY_HANDS: "Sweaty hands",
+    FallCause.WRONG_MOVE: "Wrong move",
+    FallCause.OTHER: "Other",
 }
 
 
@@ -26,10 +20,9 @@ class DashboardStats:
     top_count: int
     fall_count: int
     fall_cause_counts: dict[FallCause, int]
-    period_label: str = ""
 
 
-def compute_stats(records: list[Record], period_label: str = "") -> DashboardStats:
+def compute_stats(records: list[Record]) -> DashboardStats:
     total = len(records)
     top_count = sum(1 for r in records if r.result == ClimbResult.TOP)
     fall_count = total - top_count
@@ -44,7 +37,6 @@ def compute_stats(records: list[Record], period_label: str = "") -> DashboardSta
         top_count=top_count,
         fall_count=fall_count,
         fall_cause_counts=cause_counts,
-        period_label=period_label,
     )
 
 
@@ -53,86 +45,50 @@ def focus_points(stats: DashboardStats) -> list[str]:
         return []
     top_cause = max(stats.fall_cause_counts, key=lambda c: stats.fall_cause_counts[c])
     label = _CAUSE_LABELS.get(top_cause, top_cause.value)
-    return [
-        f"「{label}」を意識して登りましょう（全フォールの {_cause_ratio(stats, top_cause):.0f}%）"
-    ]
+    return [f'Focus on "{label}" ({_cause_ratio(stats, top_cause):.0f}% of all falls)']
+
+
+def _fall_rate(stats: DashboardStats) -> float:
+    if stats.total_tries == 0:
+        return 0.0
+    return stats.fall_count / stats.total_tries * 100
 
 
 def render_terminal(stats: DashboardStats) -> str:
-    fall_rate = (
-        (stats.fall_count / stats.total_tries * 100) if stats.total_tries > 0 else 0.0
-    )
     lines = [
-        f"期間: {stats.period_label}" if stats.period_label else "",
-        f"トライ数: {stats.total_tries}  完登: {stats.top_count}  フォール: {stats.fall_count}  フォール率: {fall_rate:.0f}%",
+        f"Tries: {stats.total_tries}  Tops: {stats.top_count}  "
+        f"Falls: {stats.fall_count}  Fall rate: {_fall_rate(stats):.0f}%",
     ]
     if stats.fall_cause_counts:
-        lines.append("フォール原因:")
+        lines.append("Fall causes:")
         for cause, count in sorted(
             stats.fall_cause_counts.items(), key=lambda x: -x[1]
         ):
             label = _CAUSE_LABELS.get(cause, cause.value)
-            lines.append(f"  {label}: {count}回")
+            lines.append(f"  {label}: {count}")
     points = focus_points(stats)
     if points:
-        lines.append("フォーカスポイント:")
+        lines.append("Focus points:")
         for p in points:
             lines.append(f"  {p}")
     return "\n".join(line for line in lines if line)
 
 
-def render_image(stats: DashboardStats, output_path: Path) -> None:
-    fig, axes = plt.subplots(1, 2, figsize=(10, 5))
-
-    _draw_result_pie(axes[0], stats)
-    _draw_cause_pie(axes[1], stats)
-
-    title = f"BetaLog ダッシュボード {stats.period_label}".strip()
-    fig.suptitle(title, fontsize=14)
-    fig.tight_layout()
-    fig.savefig(output_path, dpi=100)
-    plt.close(fig)
-
-
-def _draw_result_pie(ax: Axes, stats: DashboardStats) -> None:
-    ax.set_title("結果")
-    if stats.total_tries == 0:
-        ax.text(
-            0.5, 0.5, "データなし", ha="center", va="center", transform=ax.transAxes
-        )
-        ax.axis("off")
-        return
-    sizes = [stats.top_count, stats.fall_count]
-    labels = ["完登", "フォール"]
-    colors = ["#4CAF50", "#F44336"]
-    non_zero = [
-        (size, label, color)
-        for size, label, color in zip(sizes, labels, colors)
-        if size > 0
-    ]
-    if non_zero:
-        pie_sizes, pie_labels, pie_colors = zip(*non_zero)
-        ax.pie(
-            pie_sizes,
-            labels=pie_labels,
-            colors=pie_colors,
-            autopct="%1.0f%%",
-            startangle=90,
-        )
+def stats_to_dict(stats: DashboardStats) -> dict[str, object]:
+    return {
+        "total_tries": stats.total_tries,
+        "top_count": stats.top_count,
+        "fall_count": stats.fall_count,
+        "fall_rate": round(_fall_rate(stats), 2),
+        "fall_causes": {
+            cause.value: count for cause, count in stats.fall_cause_counts.items()
+        },
+        "focus_points": focus_points(stats),
+    }
 
 
-def _draw_cause_pie(ax: Axes, stats: DashboardStats) -> None:
-    ax.set_title("フォール原因")
-    if not stats.fall_cause_counts:
-        ax.text(
-            0.5, 0.5, "データなし", ha="center", va="center", transform=ax.transAxes
-        )
-        ax.axis("off")
-        return
-    sorted_causes = sorted(stats.fall_cause_counts.items(), key=lambda x: -x[1])
-    sizes = [count for _, count in sorted_causes]
-    labels = [_CAUSE_LABELS.get(cause, cause.value) for cause, _ in sorted_causes]
-    ax.pie(sizes, labels=labels, autopct="%1.0f%%", startangle=90)
+def render_json(stats: DashboardStats) -> str:
+    return json.dumps(stats_to_dict(stats), ensure_ascii=False, indent=2)
 
 
 def _cause_ratio(stats: DashboardStats, cause: FallCause) -> float:

@@ -13,7 +13,7 @@ from climb_log.dashboard import (
     render_terminal,
 )
 from climb_log.models import ClimbResult, FallCause, Record, WallAngle
-from climb_log.store import TryStore
+from climb_log.store import Store
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -65,7 +65,7 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _cmd_record(args: argparse.Namespace, store: TryStore) -> None:
+def _cmd_record(args: argparse.Namespace, store: Store) -> None:
     record = Record(
         id=str(uuid.uuid4()),
         video_path=args.input,
@@ -80,7 +80,7 @@ def _cmd_record(args: argparse.Namespace, store: TryStore) -> None:
     print(f"記録しました: {record.id} ({record.result.value})")
 
 
-def _cmd_dashboard(args: argparse.Namespace, store: TryStore) -> None:
+def _cmd_dashboard(args: argparse.Namespace, store: Store) -> None:
     now = datetime.now()
     if args.period == "week":
         since = now - timedelta(days=7)
@@ -106,7 +106,7 @@ def _cmd_dashboard(args: argparse.Namespace, store: TryStore) -> None:
     print(f"\nダッシュボード画像を保存しました: {output}")
 
 
-def _cmd_list(store: TryStore) -> None:
+def _cmd_list(store: Store) -> None:
     records = store.list_all()
     if not records:
         print("記録がありません。")
@@ -122,7 +122,7 @@ def _cmd_list(store: TryStore) -> None:
 def main() -> None:
     parser = _build_parser()
     args = parser.parse_args()
-    store = TryStore()
+    store = Store()
 
     if args.command == "record":
         _cmd_record(args, store)

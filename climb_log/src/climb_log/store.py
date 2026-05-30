@@ -9,7 +9,7 @@ from climb_log.models import Record
 _SCHEMA_VERSION = 1
 
 
-class TryStore:
+class Store:
     def __init__(self, path: Path = Path.home() / ".betalog" / "records.json"):
         self._path = path
 

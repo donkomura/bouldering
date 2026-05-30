@@ -4,9 +4,7 @@ from datetime import datetime
 from pathlib import Path
 from uuid import uuid4
 
-import pytest
 from climb_log.dashboard import (
-    DashboardStats,
     compute_stats,
     focus_points,
     render_image,

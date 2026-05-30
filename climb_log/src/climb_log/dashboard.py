@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 import matplotlib
@@ -78,7 +78,7 @@ def render_terminal(stats: DashboardStats) -> str:
         lines.append("フォーカスポイント:")
         for p in points:
             lines.append(f"  {p}")
-    return "\n".join(l for l in lines if l)
+    return "\n".join(line for line in lines if line)
 
 
 def render_image(stats: DashboardStats, output_path: Path) -> None:
@@ -105,10 +105,20 @@ def _draw_result_pie(ax: Axes, stats: DashboardStats) -> None:
     sizes = [stats.top_count, stats.fall_count]
     labels = ["完登", "フォール"]
     colors = ["#4CAF50", "#F44336"]
-    non_zero = [(s, l, c) for s, l, c in zip(sizes, labels, colors) if s > 0]
+    non_zero = [
+        (size, label, color)
+        for size, label, color in zip(sizes, labels, colors)
+        if size > 0
+    ]
     if non_zero:
-        s, l, c = zip(*non_zero)
-        ax.pie(s, labels=l, colors=c, autopct="%1.0f%%", startangle=90)
+        pie_sizes, pie_labels, pie_colors = zip(*non_zero)
+        ax.pie(
+            pie_sizes,
+            labels=pie_labels,
+            colors=pie_colors,
+            autopct="%1.0f%%",
+            startangle=90,
+        )
 
 
 def _draw_cause_pie(ax: Axes, stats: DashboardStats) -> None:

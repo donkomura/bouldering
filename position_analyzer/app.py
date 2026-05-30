@@ -48,7 +48,9 @@ class AppOptions:
 
 
 class Analyzer:
-    def __init__(self, input_path: str, model_path: str, trail_length: int | None, use_gpu: bool):
+    def __init__(
+        self, input_path: str, model_path: str, trail_length: int | None, use_gpu: bool
+    ):
         self.filename: str = input_path
         self.landmarker: Any = self._create_landmarker(model_path, use_gpu)
         self.com_history: collections.deque[tuple[int, int]] = collections.deque(
@@ -62,7 +64,9 @@ class Analyzer:
         self.total_frames: int = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
         self.fourcc: int = cv2.VideoWriter_fourcc(*"mp4v")
 
-    def _build_landmarker(self, model_path: str, delegate: Any, num_threads: int = 4) -> Any:
+    def _build_landmarker(
+        self, model_path: str, delegate: Any, num_threads: int = 4
+    ) -> Any:
         base_options = mp_python.BaseOptions(
             model_asset_path=model_path, delegate=delegate
         )
@@ -94,7 +98,9 @@ class Analyzer:
                     f"Failed to initialize GPU delegate. Using CPU with {cpu_threads} threads ({e})"
                 )
                 return self._build_landmarker(
-                    model_path, mp_python.BaseOptions.Delegate.CPU, num_threads=cpu_threads
+                    model_path,
+                    mp_python.BaseOptions.Delegate.CPU,
+                    num_threads=cpu_threads,
                 )
         else:
             logger.info(f"Using CPU with {cpu_threads} threads")
@@ -200,7 +206,9 @@ def app(options: AppOptions) -> None:
 
     timer.checkin("setup")
     trail_length = None if options.keep_trail else options.trail
-    analyzer = Analyzer(options.input_path, options.model_path, trail_length, options.use_gpu)
+    analyzer = Analyzer(
+        options.input_path, options.model_path, trail_length, options.use_gpu
+    )
     renderer = Renderer(
         options.output_path, analyzer.fps, analyzer.width, analyzer.height
     )

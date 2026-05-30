@@ -18,3 +18,4 @@ dev = [
 [tool.basedpyright]
 typeCheckingMode = "standard"
 reportMissingTypeStubs = false
+exclude = ["climb_log"]

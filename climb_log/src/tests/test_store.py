@@ -4,13 +4,12 @@ from datetime import datetime
 from pathlib import Path
 
 import pytest
-
-from climb_log.models import ClimbResult, FallCause, TryRecord, WallAngle
+from climb_log.models import ClimbResult, FallCause, Record, WallAngle
 from climb_log.store import TryStore
 
 
-def make_record(id: str = "test-id", recorded_at: datetime | None = None) -> TryRecord:
-    return TryRecord(
+def make_record(id: str = "test-id", recorded_at: datetime | None = None) -> Record:
+    return Record(
         id=id,
         video_path="test.MOV",
         result=ClimbResult.FALL,

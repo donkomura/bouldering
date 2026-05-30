@@ -27,7 +27,7 @@ class WallAngle(str, Enum):
 
 
 @dataclass
-class TryRecord:
+class Record:
     id: str
     video_path: str
     result: ClimbResult
@@ -53,7 +53,7 @@ class TryRecord:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> TryRecord:
+    def from_dict(cls, data: dict[str, Any]) -> Record:
         return cls(
             id=data["id"],
             video_path=data["video_path"],
@@ -61,6 +61,8 @@ class TryRecord:
             recorded_at=datetime.fromisoformat(data["recorded_at"]),
             fall_causes=[FallCause(c) for c in data.get("fall_causes", [])],
             grade=data.get("grade"),
-            wall_angle=WallAngle(data["wall_angle"]) if data.get("wall_angle") else None,
+            wall_angle=WallAngle(data["wall_angle"])
+            if data.get("wall_angle")
+            else None,
             note=data.get("note"),
         )

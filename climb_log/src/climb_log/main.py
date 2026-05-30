@@ -6,8 +6,13 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from climb_log.dashboard import compute_stats, focus_points, render_image, render_terminal
-from climb_log.models import ClimbResult, FallCause, TryRecord, WallAngle
+from climb_log.dashboard import (
+    compute_stats,
+    focus_points,
+    render_image,
+    render_terminal,
+)
+from climb_log.models import ClimbResult, FallCause, Record, WallAngle
 from climb_log.store import TryStore
 
 
@@ -19,9 +24,14 @@ def _build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     record_p = sub.add_parser("record", help="トライを記録する")
-    record_p.add_argument("-i", "--input", required=True, metavar="VIDEO", help="動画ファイルパス")
     record_p.add_argument(
-        "--result", required=True, choices=["top", "fall"], help="結果（top=完登, fall=フォール）"
+        "-i", "--input", required=True, metavar="VIDEO", help="動画ファイルパス"
+    )
+    record_p.add_argument(
+        "--result",
+        required=True,
+        choices=["top", "fall"],
+        help="結果（top=完登, fall=フォール）",
     )
     record_p.add_argument(
         "--cause",
@@ -41,9 +51,14 @@ def _build_parser() -> argparse.ArgumentParser:
 
     dash_p = sub.add_parser("dashboard", help="悪癖ダッシュボードを表示する")
     dash_p.add_argument(
-        "--period", choices=["week", "month"], default="week", help="集計期間（デフォルト: week）"
+        "--period",
+        choices=["week", "month"],
+        default="week",
+        help="集計期間（デフォルト: week）",
     )
-    dash_p.add_argument("--image", metavar="PATH", help="ダッシュボード画像の出力先パス")
+    dash_p.add_argument(
+        "--image", metavar="PATH", help="ダッシュボード画像の出力先パス"
+    )
 
     sub.add_parser("list", help="トライ記録一覧を表示する")
 
@@ -51,7 +66,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 def _cmd_record(args: argparse.Namespace, store: TryStore) -> None:
-    record = TryRecord(
+    record = Record(
         id=str(uuid.uuid4()),
         video_path=args.input,
         result=ClimbResult(args.result),
@@ -69,10 +84,10 @@ def _cmd_dashboard(args: argparse.Namespace, store: TryStore) -> None:
     now = datetime.now()
     if args.period == "week":
         since = now - timedelta(days=7)
-        label = f"直近7日間"
+        label = "直近7日間"
     else:
         since = now - timedelta(days=30)
-        label = f"直近30日間"
+        label = "直近30日間"
 
     records = store.list_since(since)
     stats = compute_stats(records, period_label=label)
@@ -99,7 +114,9 @@ def _cmd_list(store: TryStore) -> None:
     for r in records:
         causes = ", ".join(c.value for c in r.fall_causes) if r.fall_causes else "-"
         grade = r.grade or "-"
-        print(f"[{r.recorded_at.strftime('%Y-%m-%d %H:%M')}] {r.result.value:4s}  grade={grade}  cause={causes}  {r.video_path}")
+        print(
+            f"[{r.recorded_at.strftime('%Y-%m-%d %H:%M')}] {r.result.value:4s}  grade={grade}  cause={causes}  {r.video_path}"
+        )
 
 
 def main() -> None:

@@ -3,19 +3,30 @@ from __future__ import annotations
 from datetime import datetime
 
 import pytest
+from climb_log.models import ClimbResult, FallCause, Record, WallAngle
 
-from climb_log.models import ClimbResult, FallCause, TryRecord, WallAngle
 
-
-def make_record(**kwargs) -> TryRecord:
-    defaults = dict(
-        id="test-id",
-        video_path="test.MOV",
-        result=ClimbResult.FALL,
-        recorded_at=datetime(2026, 5, 30, 14, 0, 0),
+def make_record(
+    *,
+    id: str = "test-id",
+    video_path: str = "test.MOV",
+    result: ClimbResult = ClimbResult.FALL,
+    recorded_at: datetime = datetime(2026, 5, 30, 14, 0, 0),
+    fall_causes: list[FallCause] | None = None,
+    grade: str | None = None,
+    wall_angle: WallAngle | None = None,
+    note: str | None = None,
+) -> Record:
+    return Record(
+        id=id,
+        video_path=video_path,
+        result=result,
+        recorded_at=recorded_at,
+        fall_causes=fall_causes or [],
+        grade=grade,
+        wall_angle=wall_angle,
+        note=note,
     )
-    defaults.update(kwargs)
-    return TryRecord(**defaults)
 
 
 class TestClimbResult:
@@ -43,7 +54,7 @@ class TestWallAngle:
         assert "roof" in values
 
 
-class TestTryRecord:
+class TestRecord:
     def test_is_fall_when_result_is_fall(self):
         record = make_record(result=ClimbResult.FALL)
         assert record.is_fall() is True
@@ -54,7 +65,7 @@ class TestTryRecord:
 
     def test_to_dict_roundtrip_minimal(self):
         record = make_record()
-        assert TryRecord.from_dict(record.to_dict()) == record
+        assert Record.from_dict(record.to_dict()) == record
 
     def test_to_dict_roundtrip_full(self):
         record = make_record(
@@ -64,7 +75,7 @@ class TestTryRecord:
             wall_angle=WallAngle.OVERHANG,
             note="テストメモ",
         )
-        assert TryRecord.from_dict(record.to_dict()) == record
+        assert Record.from_dict(record.to_dict()) == record
 
     def test_to_dict_contains_required_keys(self):
         record = make_record()

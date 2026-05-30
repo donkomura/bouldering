@@ -5,13 +5,18 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
+from climb_log.dashboard import (
+    DashboardStats,
+    compute_stats,
+    focus_points,
+    render_image,
+    render_terminal,
+)
+from climb_log.models import ClimbResult, FallCause, Record
 
-from climb_log.dashboard import DashboardStats, compute_stats, focus_points, render_image, render_terminal
-from climb_log.models import ClimbResult, FallCause, TryRecord
 
-
-def make_fall(cause: FallCause | None = None, id: str | None = None) -> TryRecord:
-    return TryRecord(
+def make_fall(cause: FallCause | None = None, id: str | None = None) -> Record:
+    return Record(
         id=id or str(uuid4()),
         video_path="v.MOV",
         result=ClimbResult.FALL,
@@ -20,8 +25,8 @@ def make_fall(cause: FallCause | None = None, id: str | None = None) -> TryRecor
     )
 
 
-def make_top(id: str | None = None) -> TryRecord:
-    return TryRecord(
+def make_top(id: str | None = None) -> Record:
+    return Record(
         id=id or str(uuid4()),
         video_path="v.MOV",
         result=ClimbResult.TOP,
